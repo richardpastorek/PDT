@@ -32,5 +32,5 @@ Build a map-based application, which lets the user see geo-based data on a map a
 - [https://github.com/richardpastorek/PDT/tree/master/src/main](https://github.com/richardpastorek/PDT/tree/master/src/main)
 
 ## Used data 
-- [data](https://github.com/richardpastorek/PDT/tree/master/data)
+- [https://github.com/richardpastorek/PDT/tree/master/data](https://github.com/richardpastorek/PDT/tree/master/data)
 - Roads data missing due to size (over 500MB)
