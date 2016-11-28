@@ -25,10 +25,12 @@ Build a map-based application, which lets the user see geo-based data on a map a
 - [Mapbox GL JS](https://www.mapbox.com/mapbox-gl-js/api/) (v0.28.0)
 - [PostgreSQL](http://www.postgresql.org/) (v9.6)
 - [PostGIS](http://postgis.net/) (v2.2.4)
-- [ogr2ogr](http://www.gdal.org/ogr2ogr.html)
+- [ogr2gui](https://sourceforge.net/p/ogr2gui/wiki/Home/)
+- [Spark](http://sparkjava.com/)
 
 ## Application source code
-- []()
+- [https://github.com/richardpastorek/PDT/tree/master/src/main](https://github.com/richardpastorek/PDT/tree/master/src/main)
 
-## Used data (geojson format)
+## Used data 
 - []()
+- Roads data missing due to size (over 500MB)
