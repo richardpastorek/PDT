@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.util.UUID;
 
 import static spark.Spark.port;
+import static spark.Spark.staticFileLocation;
 
 /**
  * Created by richardpastorek on 21.10.2016.
@@ -31,14 +32,14 @@ public class Main {
 
         try {
             logger.info("Starting server on port 4567");
+            staticFileLocation("/webapp");
             new ApiListener();
-            new DBManager();
-            DBManager.getConnection();
-        } catch(Exception e) {
+            } catch(Exception e) {
             e.printStackTrace();
             logger.fatal("Cannot initialize server, exiting...");
             return;
         }
+
     }
 
 }
