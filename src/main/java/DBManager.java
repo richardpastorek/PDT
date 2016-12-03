@@ -41,16 +41,24 @@ public class  DBManager {
 
     }
 
-    public static String getCarCrashesInRadius(String longitude, String latitude, String radius){
+    public static String getCarCrashesInRadius(double longitude, double latitude, int radius){
         Connection con = getConnection();
-        Statement statement = null;
-        String query = "SELECT ST_AsGeoJSON(geom) AS miesto_havarie, number_of_vehicles AS auta, number_of_casualties AS obete, date FROM accidents_2015 " +
-                "where ST_DISTANCE(geom::geography, ST_GeomFromText('POINT("+longitude+" "+latitude+")',4326)::geography) <= "+radius;
+
+        String query = "SELECT row_to_json(res) AS result FROM (SELECT 'geojson' AS type, row_to_json(fc) AS data FROM " +
+                "(SELECT 'FeatureCollection' AS type, array_to_json(array_agg(f)) AS features FROM " +
+                "(SELECT 'Feature' AS type, ST_AsGeoJSON(geom)::json AS geometry, row_to_json((SELECT a FROM " +
+                "(SELECT number_of_vehicles AS auta, number_of_casualties AS obete, date) as a )) AS properties FROM " +
+                "accidents_2015 where ST_DISTANCE(geom::geography, ST_SetSRID(ST_MAKEPOINT(?, ?),4326)::geography) <= ?) AS f)AS fc) AS res";
+
         try {
-            statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(query);
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setDouble(1, longitude);
+            ps.setDouble(2, latitude);
+            ps.setInt(3, radius);
+            ResultSet rs = ps.executeQuery();
             closeConnection(con);
-            return CrashSites.processData(rs);
+            rs.next();
+            return rs.getString("result");
         }catch(Exception e){
             log.info("FAILED TO GET CAR CRASHES IN DBMANAGER!");
             e.printStackTrace();
@@ -62,12 +70,19 @@ public class  DBManager {
     public static String getRegions(){
         Connection con = getConnection();
         Statement statement = null;
-        String query = "SELECT ST_AsGeoJSON(geom) AS region, ST_AsGeoJSON(ST_CENTROID(geom)) AS point, name_2 AS name FROM gbr_adm2";
+
+        String query = "SELECT row_to_json(res) AS result FROM (SELECT 'geojson' AS type, row_to_json(fc) AS data FROM(SELECT 'FeatureCollection' AS type, array_to_json(array_agg(f)) AS features FROM" +
+                "(SELECT 'Feature' AS type, ST_AsGeoJSON(ST_CENTROID(geom))::json AS geometry, row_to_json((SELECT a FROM("+
+                "SELECT name_2 as title) as a )) AS properties FROM gbr_adm2 UNION ALL "+
+                "SELECT 'Feature' AS type, ST_AsGeoJSON(geom)::json AS geometry, row_to_json((SELECT a FROM("+
+                "SELECT name_2 as title) as a )) AS properties FROM gbr_adm2) as f) AS fc) AS res";
+
         try {
             statement = con.createStatement();
             ResultSet rs = statement.executeQuery(query);
             closeConnection(con);
-            return Regions.processData(rs);
+            rs.next();
+            return rs.getString("result");
         }catch(Exception e){
             log.info("FAILED TO GET GBR_ADM2 geoms IN DBMANAGER!");
             e.printStackTrace();
@@ -78,16 +93,23 @@ public class  DBManager {
 
 
 
-    public static String getCrashesByRegion(String longitude, String latitude){
+    public static String getCrashesByRegion(double longitude, double latitude){
         Connection con = getConnection();
-        Statement statement = null;
-        String query = "SELECT ST_AsGeoJSON(geom) AS miesto_havarie, number_of_vehicles AS auta, number_of_casualties AS obete, date from accidents_2015 " +
-                "where ST_WITHIN(ST_SetSRID(geom, 4326), ST_SetSRID( (SELECT geom FROM gbr_adm2 WHERE ST_WITHIN(ST_SetSRID(ST_MAKEPOINT("+longitude+", "+latitude+"),4326), ST_SetSRID((geom),4326)  ) is true), 4326)) is true";
+
+        String query = "SELECT row_to_json(res) AS result FROM (SELECT 'geojson' AS type, row_to_json(fc) AS data FROM "+
+        "(SELECT 'FeatureCollection' AS type, array_to_json(array_agg(f)) AS features FROM"+
+               " (SELECT 'Feature' AS type, ST_AsGeoJSON(geom)::json AS geometry, row_to_json((SELECT a FROM"+
+        "(SELECT number_of_vehicles AS auta, number_of_casualties AS obete, date) as a )) AS properties FROM accidents_2015 "+
+        "where ST_WITHIN(ST_SetSRID(geom, 4326), ST_SetSRID( (SELECT geom FROM gbr_adm2 WHERE ST_WITHIN(ST_SetSRID(ST_MAKEPOINT(?, ?),4326), ST_SetSRID((geom),4326)) is true), 4326)) is true) AS f)AS fc) AS res";
+
         try {
-            statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(query);
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setDouble(1, longitude);
+            ps.setDouble(2, latitude);
+            ResultSet rs = ps.executeQuery();
             closeConnection(con);
-            return CrashSites.processData2(rs);
+            rs.next();
+            return rs.getString("result");
         }catch(Exception e){
             log.info("FAILED TO GET GBR_ADM2 geoms IN DBMANAGER!");
             e.printStackTrace();
@@ -96,16 +118,21 @@ public class  DBManager {
         return "";
     }
 
-    public static String getCrashesByRoad(String lon, String lat, String width){
+    public static String getCrashesByRoad(double lon, double lat, int width){
 
         Connection con = getConnection();
         Statement statement = null;
-        String query1 = "select ST_AsGeoJson(ST_BUFFER(ST_SetSRID(geom, 4326)::geography, "+width+")::geometry) AS buff FROM \"gis.osm_roads_free_1\" WHERE ST_CROSSES(ST_BUFFER(ST_SETSRID(ST_MAKEPOINT("+lon+", "+lat+"),4326)::geography, 2)::geometry, ST_SetSRID(geom,4326)) is true LIMIT 1";
+
+        String query1 = "select ST_AsGeoJson(ST_BUFFER(ST_SetSRID(geom, 4326)::geography, ?)::geometry) AS buff FROM \"gis.osm_roads_free_1\" WHERE ST_CROSSES(ST_BUFFER(ST_SETSRID(ST_MAKEPOINT(?, ?),4326)::geography, 2)::geometry, ST_SetSRID(geom,4326)) is true LIMIT 1";
         try {
+            PreparedStatement ps = con.prepareStatement(query1);
+            ps.setInt(1, width);
+            ps.setDouble(2, lon);
+            ps.setDouble(3, lat);
+
             long time = System.currentTimeMillis();
             log.info("Started executing 1st query");
-            statement = con.createStatement();
-            ResultSet rs = statement.executeQuery(query1);
+            ResultSet rs = ps.executeQuery();
             log.info("1st query finished in: "+ Long.toString(System.currentTimeMillis() - time));
 
 

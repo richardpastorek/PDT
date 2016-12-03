@@ -34,7 +34,9 @@ map.on('click', function (e) {
             // based on the feature found.
             var popup = new mapboxgl.Popup()
                 .setLngLat(feature.geometry.coordinates)
-                .setHTML(feature.properties.description)
+                .setHTML("Datum: " + feature.properties.date+
+                "<br>Pocet aut: " +feature.properties.auta+
+                "<br>Pocet obeti: "+ feature.properties.obete)
                 .addTo(map);
     }
 
@@ -205,10 +207,12 @@ map.on('load', function() {
         });
 
     $("#buttonCrashesByRoad").click(function (e) {
+                        var map_bounds = map.getBounds();
 
                     $.ajax({
 
-                        url: "http://localhost:4567/showcrashbyroad?lon="+$('#textFieldX').val()+"&lat="+$('#textFieldY').val()+"&rad="+$('#textFieldRoadWidth').val(),
+                        url: "http://localhost:4567/showcrashbyroad?lon="+$('#textFieldX').val()+"&lat="+$('#textFieldY').val()+"&rad="+$('#textFieldRoadWidth').val()+
+                        "&sw="+map_bounds.getSouthWest().toArray()+"&ne="+map_bounds.getNorthEast().toArray(),
                         success: function (data) {
 
                             showCrashes(data);
@@ -281,8 +285,13 @@ map.on('load', function() {
            if(data=="")
                return;
 
+               var testjson = jQuery.parseJSON(data);
+                if(testjson.data.features == null){
+                    return;
+                }
 
-               map.addSource("crashSites1", jQuery.parseJSON(data));
+
+               map.addSource("crashSites1", testjson);
 
                map.addLayer({
                    "id": "crashSites1",
@@ -290,7 +299,6 @@ map.on('load', function() {
                    "source": "crashSites1",
                    "layout": {
                        "icon-image": "car-15",
-                       "text-field": "{title}",
                        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
                        "text-offset": [0, 0.6],
                        "text-anchor": "top",

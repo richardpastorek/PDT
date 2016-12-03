@@ -18,7 +18,12 @@ public class ApiResponses {
         }
 
         else{
-            return DBManager.getCarCrashesInRadius(lon, lat, rad);
+            double longitude = Double.parseDouble(lon);
+            double latitude = Double.parseDouble(lat);
+            int radius = Integer.parseInt(rad);
+
+
+            return DBManager.getCarCrashesInRadius(longitude, latitude, radius);
         }
     }
 
@@ -35,7 +40,10 @@ public class ApiResponses {
         }
 
         else{
-            return DBManager.getCrashesByRegion(lon, lat);
+            double longitude = Double.parseDouble(lon);
+            double latitude = Double.parseDouble(lat);
+
+            return DBManager.getCrashesByRegion(longitude, latitude);
         }
     }
 
@@ -46,7 +54,10 @@ public class ApiResponses {
         }
 
         else{
-            return DBManager.getCrashesByRoad(lon, lat, width);
+            double longitude = Double.parseDouble(lon);
+            double latitude = Double.parseDouble(lat);
+            int road_width = Integer.parseInt(width);
+            return DBManager.getCrashesByRoad(longitude, latitude, road_width);
         }
     }
 

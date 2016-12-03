@@ -29,7 +29,8 @@ public class ApiListener {
 
         get("/showcrashbyroad", (request, response) -> {
 
-            log.info("method: " + request.requestMethod() + " " + request.url() + " "+ request.queryParams("lon")+ request.queryParams("lat") +request.queryParams("rad") + " " + logMessage);
+            log.info("method: " + request.requestMethod() + " " + request.url() + " "+ request.queryParams("lon")+ " "+ request.queryParams("lat")+ " " +request.queryParams("rad") +
+                    " " + request.queryParams("sw") + " " + request.queryParams("ne") + logMessage);
 
             return ApiResponses.getCarCrashesByRoad(request.queryParams("lon"), request.queryParams("lat"), request.queryParams("rad"));
         });
